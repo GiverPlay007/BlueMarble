@@ -1,8 +1,10 @@
 #include <iostream>
 #include <cassert>
+#include <array>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 const int width = 1280;
 const int height = 720;
@@ -21,16 +23,40 @@ int main()
 
   print_gl_version();
 
-  glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+  std::array<glm::vec3, 6> triangle = {
+    glm::vec3 { -0.5f, -0.5f, 0.0f },
+    glm::vec3 { 0.5f, -0.5f, 0.0f  },
+    glm::vec3 { 0.0f, 0.5f, 0.0f },
+  };
+
+  GLuint vertexBuffer;
+
+  glGenBuffers(1, &vertexBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle.data(), GL_STATIC_DRAW);
 
   while(!glfwWindowShouldClose(window))
   {
-    glClear(GL_COLOR_BUFFER_BIT);
     glfwPollEvents();
+    
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr); 
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDisableVertexAttribArray(0);
+
     glfwSwapBuffers(window);
   }
 
+  glDeleteBuffers(1, &vertexBuffer);
   glfwTerminate();
+  
   return 0;
 }
 
