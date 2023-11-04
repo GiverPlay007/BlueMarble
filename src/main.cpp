@@ -153,6 +153,17 @@ GLuint compileShaderProgram(const char* shadersPath)
   if(result == GL_FALSE)
   {
     std::cout << "Failed to link shader program: " << shadersPath << std::endl;
+
+    GLint infoLogLength = 0;
+    glGetProgramiv(shaderProgramId, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+    if(infoLogLength > 0)
+    {
+      std::string programInfoLog(infoLogLength, '\0');
+      glGetProgramInfoLog(shaderProgramId, infoLogLength, nullptr, &programInfoLog[0]);
+      std::cout << programInfoLog << std::endl;
+    }
+
     assert (false);
   }
 
