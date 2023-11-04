@@ -30,6 +30,7 @@ int main()
 
   printGlVersion();
 
+  // Compile the shader program
   GLuint shaderProgramId =  compileShaderProgram("shaders/triangle");
 
   // Define triangle
@@ -75,20 +76,32 @@ int main()
 
   while(!glfwWindowShouldClose(window))
   {
+    // Process the screen events
     glfwPollEvents();
-    
+
+    // Clear the screen
     glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
+    // Activate shader program
+    glUseProgram(shaderProgramId);
+
+    // Bind triangle vertices
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr); 
 
+    // Draw the triangle
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    // Unbind triangle vertices
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDisableVertexAttribArray(0);
 
+    // Disable shader program
+    glUseProgram(0);
+
+    // Copy draw buffers to the screen
     glfwSwapBuffers(window);
   }
 
