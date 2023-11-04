@@ -13,8 +13,6 @@ const int height = 720;
 
 void printGlVersion();
 
-std::string readFile(const char* filePath);
-
 GLuint compileShaderProgram(const char* shadersPath);
 
 int main()
@@ -98,6 +96,18 @@ int main()
   return 0;
 }
 
+std::string readFile(const char* filePath)
+{
+  std::string fileContent;
+
+  if(std::ifstream fileStream { filePath, std::ios::in })
+  {
+    fileContent.assign(std::istreambuf_iterator<char>(fileStream), std::istreambuf_iterator<char>());
+  }
+
+  return fileContent;
+}
+
 GLuint compileShaderProgram(const char* shadersPath)
 {
   std::string vertexPath = std::string(shadersPath) + ".vert";
@@ -163,16 +173,4 @@ void printGlVersion()
   std::cout << "OpenGl Renderer: " << glGetString(GL_RENDERER) << std::endl;
   std::cout << "OpenGl Version (renderer): " << glGetString(GL_VERSION) << std::endl;
   std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-}
-
-std::string readFile(const char* filePath)
-{
-  std::string fileContent;
-
-  if(std::ifstream fileStream { filePath, std::ios::in })
-  {
-    fileContent.assign(std::istreambuf_iterator<char>(fileStream), std::istreambuf_iterator<char>());
-  }
-
-  return fileContent;
 }
