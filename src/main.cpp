@@ -13,6 +13,8 @@ const int height = 720;
 
 void printGlVersion();
 
+void checkShaderErrors(GLuint shaderId);
+
 GLuint compileShaderProgram(const char* shadersPath);
 
 int main()
@@ -127,12 +129,16 @@ GLuint compileShaderProgram(const char* shadersPath)
   const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
 
   // Compile vertex shader
+  std::cout << "Compiling vertex shader " << vertexPath << std::endl;
   glShaderSource(vertexShaderId, 1, &vertexShaderSourcePtr, nullptr);
   glCompileShader(vertexShaderId);
+  checkShaderErrors(vertexShaderId);
 
   // Compile fragment shader
+  std::cout << "Compiling fragment shader " << fragmentPath << std::endl;
   glShaderSource(fragmentShaderId, 1, &fragmentShaderSourcePtr, nullptr);
   glCompileShader(fragmentShaderId);
+  checkShaderErrors(fragmentShaderId);
 
   // Link shader program
   GLuint shaderProgramId = glCreateProgram();
@@ -158,6 +164,30 @@ GLuint compileShaderProgram(const char* shadersPath)
   glDeleteShader(fragmentShaderId);
 
   return shaderProgramId;
+}
+
+void checkShaderErrors(GLuint shaderId)
+{
+  GLint result = GL_TRUE;
+  glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result);
+
+  if(result == GL_FALSE)
+  {
+    std::cout << "Failed to compile shader" << std::endl;
+
+    GLint infoLogLength = 0;
+    glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+    if(infoLogLength > 0)
+    {
+      std::string shaderInfoLog(infoLogLength, '\0');
+      glGetShaderInfoLog(shaderId, infoLogLength, nullptr, &shaderInfoLog[0]);
+
+      std::cout << shaderInfoLog << std::endl;
+    }
+
+    assert(false);
+  }
 }
 
 void printGlVersion()
