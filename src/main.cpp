@@ -11,9 +11,9 @@
 const int width = 1280;
 const int height = 720;
 
-void print_gl_version();
+void printGlVersion();
 
-std::string read_file(const char* filePath);
+std::string readFile(const char* filePath);
 
 GLuint compileShaderProgram(const char* shadersPath);
 
@@ -28,7 +28,7 @@ int main()
   glfwMakeContextCurrent(window);
   assert(glewInit() == GLEW_OK);
 
-  print_gl_version();
+  printGlVersion();
 
   GLuint shaderProgramId =  compileShaderProgram("shaders/triangle");
 
@@ -103,8 +103,8 @@ GLuint compileShaderProgram(const char* shadersPath)
   std::string vertexPath = std::string(shadersPath) + ".vert";
   std::string fragmentPath = std::string(shadersPath) + ".frag";
 
-  std::string vertexShaderSource = read_file(vertexPath.c_str());
-  std::string fragmentShaderSource = read_file(fragmentPath.c_str());
+  std::string vertexShaderSource = readFile(vertexPath.c_str());
+  std::string fragmentShaderSource = readFile(fragmentPath.c_str());
 
   assert(!vertexShaderSource.empty());
   assert(!fragmentShaderSource.empty());
@@ -150,7 +150,7 @@ GLuint compileShaderProgram(const char* shadersPath)
   return shaderProgramId;
 }
 
-void print_gl_version()
+void printGlVersion()
 {
   GLint glMajorVersion = 0;
   GLint glMinorVersion = 0;
@@ -165,7 +165,7 @@ void print_gl_version()
   std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
 
-std::string read_file(const char* filePath)
+std::string readFile(const char* filePath)
 {
   std::string fileContent;
 
