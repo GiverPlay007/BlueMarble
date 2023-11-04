@@ -1,6 +1,6 @@
-#version 330
+#version 330 core
 
 void main()
 {
-  
+
 }

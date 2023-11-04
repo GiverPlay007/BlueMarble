@@ -15,6 +15,8 @@ void print_gl_version();
 
 std::string read_file(const char* filePath);
 
+GLuint compileShaderProgram(const char* shadersPath);
+
 int main()
 {
   // Create window and OpenGL context
@@ -28,14 +30,7 @@ int main()
 
   print_gl_version();
 
-
-  std::string vertexShaderSource = read_file("shaders/triangle.vert");
-  std::cout << "Vertex Shader Source" << std::endl;
-  std::cout << vertexShaderSource << std::endl;
-
-  std::string fragmentShaderSource = read_file("shaders/triangle.frag");
-  std::cout << "Fragment Shader Source" << std::endl;
-  std::cout << fragmentShaderSource << std::endl;
+  GLuint shaderProgramId =  compileShaderProgram("shaders/triangle");
 
   // Define triangle
   std::array<glm::vec3, 6> triangle = {
@@ -101,6 +96,58 @@ int main()
   glfwTerminate();
   
   return 0;
+}
+
+GLuint compileShaderProgram(const char* shadersPath)
+{
+  std::string vertexPath = std::string(shadersPath) + ".vert";
+  std::string fragmentPath = std::string(shadersPath) + ".frag";
+
+  std::string vertexShaderSource = read_file(vertexPath.c_str());
+  std::string fragmentShaderSource = read_file(fragmentPath.c_str());
+
+  assert(!vertexShaderSource.empty());
+  assert(!fragmentShaderSource.empty());
+
+  // Create shaders identifiers
+  GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
+  GLuint fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
+
+  const char* vertexShaderSourcePtr = vertexShaderSource.c_str();
+  const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
+
+  // Compile vertex shader
+  glShaderSource(vertexShaderId, 1, &vertexShaderSourcePtr, nullptr);
+  glCompileShader(vertexShaderId);
+
+  // Compile fragment shader
+  glShaderSource(fragmentShaderId, 1, &fragmentShaderSourcePtr, nullptr);
+  glCompileShader(fragmentShaderId);
+
+  // Link shader program
+  GLuint shaderProgramId = glCreateProgram();
+  glAttachShader(shaderProgramId, vertexShaderId);
+  glAttachShader(shaderProgramId, fragmentShaderId);
+  glLinkProgram(shaderProgramId);
+
+  // Check for erros
+  GLint result = GL_TRUE;
+  glGetProgramiv(shaderProgramId, GL_LINK_STATUS, &result);
+
+  if(result == GL_FALSE)
+  {
+    std::cout << "Failed to link shader program: " << shadersPath << std::endl;
+    assert (false);
+  }
+
+  // Free resources
+  glDetachShader(shaderProgramId, vertexShaderId);
+  glDetachShader(shaderProgramId, fragmentShaderId);
+
+  glDeleteShader(vertexShaderId);
+  glDeleteShader(fragmentShaderId);
+
+  return shaderProgramId;
 }
 
 void print_gl_version()
