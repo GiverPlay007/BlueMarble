@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 const int width = 1280;
 const int height = 720;
@@ -13,6 +14,7 @@ void print_gl_version();
 
 int main()
 {
+  // Create window and OpenGL context
   assert(glfwInit() == GLFW_TRUE);
 
   GLFWwindow* window = glfwCreateWindow(width, height, "Blue Marble", nullptr, nullptr);
@@ -23,12 +25,41 @@ int main()
 
   print_gl_version();
 
+  // Define triangle
   std::array<glm::vec3, 6> triangle = {
     glm::vec3 { -0.5f, -0.5f, 0.0f },
     glm::vec3 { 0.5f, -0.5f, 0.0f  },
     glm::vec3 { 0.0f, 0.5f, 0.0f },
   };
 
+  // Generate model matrix
+  glm::mat4 modelMatrix = glm::identity<glm::mat4>();
+
+  // Generate view matrix
+  glm::vec3 eye { 0.0f, 0.0f, 10.0f };
+  glm::vec3 center { 0.0f, 0.0f, 0.0f };
+  glm::vec3 up { 0.0f, 1.0f, 0.0f };
+  glm::mat4 viewMatrix = glm::lookAt(eye, center, up);
+
+  // Generate projection matrix
+  constexpr float fov = glm::radians(45.0f);
+  constexpr float aspectRatio = width / height;
+  const float near = 0.001f;
+  const float far = 1000.0f;
+  glm::mat4 projectionMatrix = glm::perspective(fov, aspectRatio, near, far);
+
+  // Generate model view projection matrix
+  glm::mat4 modelViewProjectionMatrix = projectionMatrix * viewMatrix * modelMatrix;
+
+  // Apply model view projection to the triangle vertices
+  for(glm::vec3& vertex : triangle)
+  {
+    glm::vec4 projectedVertex = modelViewProjectionMatrix * glm::vec4 { vertex, 1.0f };
+    projectedVertex /= projectedVertex.w;
+    vertex = projectedVertex;
+  }
+
+  // Generate triangle vertex buffer
   GLuint vertexBuffer;
 
   glGenBuffers(1, &vertexBuffer);
