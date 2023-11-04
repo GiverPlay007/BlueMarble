@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <array>
+#include <fstream>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -11,6 +12,8 @@ const int width = 1280;
 const int height = 720;
 
 void print_gl_version();
+
+std::string read_file(const char* filePath);
 
 int main()
 {
@@ -25,10 +28,19 @@ int main()
 
   print_gl_version();
 
+
+  std::string vertexShaderSource = read_file("shaders/triangle.vert");
+  std::cout << "Vertex Shader Source" << std::endl;
+  std::cout << vertexShaderSource << std::endl;
+
+  std::string fragmentShaderSource = read_file("shaders/triangle.frag");
+  std::cout << "Fragment Shader Source" << std::endl;
+  std::cout << fragmentShaderSource << std::endl;
+
   // Define triangle
   std::array<glm::vec3, 6> triangle = {
     glm::vec3 { -0.5f, -0.5f, 0.0f },
-    glm::vec3 { 0.5f, -0.5f, 0.0f  },
+    glm::vec3 { 0.5f, -0.5f, 0.0f },
     glm::vec3 { 0.0f, 0.5f, 0.0f },
   };
 
@@ -104,4 +116,16 @@ void print_gl_version()
   std::cout << "OpenGl Renderer: " << glGetString(GL_RENDERER) << std::endl;
   std::cout << "OpenGl Version (renderer): " << glGetString(GL_VERSION) << std::endl;
   std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+}
+
+std::string read_file(const char* filePath)
+{
+  std::string fileContent;
+
+  if(std::ifstream fileStream { filePath, std::ios::in })
+  {
+    fileContent.assign(std::istreambuf_iterator<char>(fileStream), std::istreambuf_iterator<char>());
+  }
+
+  return fileContent;
 }
