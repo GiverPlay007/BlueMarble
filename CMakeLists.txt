@@ -26,7 +26,7 @@ if(WIN32)
   add_custom_command(TARGET BlueMarble POST_BUILD COMMAND 
     ${CMAKE_COMMAND} -E copy 
       "${CMAKE_SOURCE_DIR}/libs/glew/bin/Release/x64/glew32.dll"
-      "${CMAKE_BINARY_DIR}/glew32.dll"
+      "${CMAKE_CURRENT_BINARY_DIR}/glew32.dll"
   )
 else()
   find_package(glfw3 REQUIRED)
@@ -48,5 +48,21 @@ endif()
 add_custom_command(TARGET BlueMarble POST_BUILD COMMAND
   ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_SOURCE_DIR}/shaders"
-    "${CMAKE_BINARY_DIR}/shaders"
+    "${CMAKE_CURRENT_BINARY_DIR}/shaders"
 )
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_custom_command(TARGET BlueMarble POST_BUILD COMMAND
+    ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_SOURCE_DIR}/shaders"
+      "${CMAKE_CURRENT_BINARY_DIR}/Debug/shaders"
+    )
+  
+  if(WIN32)
+    add_custom_command(TARGET BlueMarble POST_BUILD COMMAND 
+      ${CMAKE_COMMAND} -E copy 
+        "${CMAKE_SOURCE_DIR}/libs/glew/bin/Release/x64/glew32.dll"
+        "${CMAKE_CURRENT_BINARY_DIR}/Debug/glew32.dll"
+    )
+  endif()
+endif()
