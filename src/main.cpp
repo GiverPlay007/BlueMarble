@@ -17,6 +17,12 @@ void checkShaderErrors(GLuint shaderId);
 
 GLuint compileShaderProgram(const char* shadersPath);
 
+struct vertex_t
+{
+  glm::vec3 position;
+  glm::vec3 color;
+};
+
 int main()
 {
   // Create window and OpenGL context
@@ -34,17 +40,17 @@ int main()
   GLuint shaderProgramId =  compileShaderProgram("shaders/triangle");
 
   // Define triangle
-  std::array<glm::vec3, 6> triangle = {
-    glm::vec3 { -0.5f, -0.5f, 0.0f },
-    glm::vec3 { 0.5f, -0.5f, 0.0f },
-    glm::vec3 { 0.0f, 0.5f, 0.0f },
+  std::array<vertex_t, 3> triangle = {
+    vertex_t { glm::vec3 { -0.5f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 0.0f, 0.0f } },
+    vertex_t { glm::vec3 {  0.5f, -0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f } },
+    vertex_t { glm::vec3 {  0.0f,  0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f } },
   };
 
   // Generate model matrix
   glm::mat4 modelMatrix = glm::identity<glm::mat4>();
 
   // Generate view matrix
-  glm::vec3 eye { 0.0f, 0.0f, 10.0f };
+  glm::vec3 eye { 0.0f, 0.0f, 3.0f };
   glm::vec3 center { 0.0f, 0.0f, 0.0f };
   glm::vec3 up { 0.0f, 1.0f, 0.0f };
   glm::mat4 viewMatrix = glm::lookAt(eye, center, up);
@@ -60,11 +66,11 @@ int main()
   glm::mat4 modelViewProjectionMatrix = projectionMatrix * viewMatrix * modelMatrix;
 
   // Apply model view projection to the triangle vertices
-  for(glm::vec3& vertex : triangle)
+  for(vertex_t& vertex : triangle)
   {
-    glm::vec4 projectedVertex = modelViewProjectionMatrix * glm::vec4 { vertex, 1.0f };
+    glm::vec4 projectedVertex = modelViewProjectionMatrix * glm::vec4 { vertex.position, 1.0f };
     projectedVertex /= projectedVertex.w;
-    vertex = projectedVertex;
+    vertex.position = projectedVertex;
   }
 
   // Generate triangle vertex buffer
@@ -80,23 +86,32 @@ int main()
     glfwPollEvents();
 
     // Clear the screen
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.1f, 0.7f, 0.8f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
     // Activate shader program
     glUseProgram(shaderProgramId);
 
-    // Bind triangle vertices
-    glEnableVertexAttribArray(0);
+    // Enable vertex attributes
+    glEnableVertexAttribArray(0); // Position
+    glEnableVertexAttribArray(1); // Color
+
+    // Bind the triangle vertices
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr); 
+    
+    // Send triangle vertices attributes to the shader program
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
 
     // Draw the triangle
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // Unbind triangle vertices
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Disable shader attributes
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 
     // Disable shader program
     glUseProgram(0);
