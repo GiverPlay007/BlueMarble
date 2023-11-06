@@ -49,7 +49,7 @@ public:
 
   // Camera movement
   float speed = 2.0f;
-  float sensitivity = 0.1;
+  float sensitivity = 0.1f;
 
   glm::mat4 getViewProjection() const
   {
@@ -155,6 +155,10 @@ int main()
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad.data(), GL_STATIC_DRAW);
+
+  // Enable back face culling
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 
   // Last frame time
   double previousTime = glfwGetTime();
