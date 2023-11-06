@@ -29,6 +29,31 @@ struct vertex_t
   glm::vec2 UV;
 };
 
+class FlyCamera
+{
+public:
+  // View matrix
+  glm::vec3 location  { 0.0f, 0.0f,  5.0f };
+  glm::vec3 direction { 0.0f, 0.0f, -1.0f };
+  glm::vec3 up        { 0.0f, 1.0f,  0.0f };
+
+  // Projection matrix
+  float aspectRatio = width / height;
+  float fov = glm::radians(45.0f);
+  float near = 0.01f;
+  float far = 1000.0f;
+
+  glm::mat4 getViewProjection() const
+  {
+    glm::mat4 view = glm::lookAt(location, location + direction, up);
+    glm::mat4 projection = glm::perspective(fov, aspectRatio, near, far);
+
+    return projection * view;
+  }
+};
+
+FlyCamera camera;
+
 int main()
 {
   // Create window and OpenGL context
@@ -78,22 +103,6 @@ int main()
   // Generate model matrix
   glm::mat4 modelMatrix = glm::identity<glm::mat4>();
 
-  // Generate view matrix
-  glm::vec3 eye { 0.0f, 0.0f, 5.0f };
-  glm::vec3 center { 0.0f, 0.0f, 0.0f };
-  glm::vec3 up { 0.0f, 1.0f, 0.0f };
-  glm::mat4 viewMatrix = glm::lookAt(eye, center, up);
-
-  // Generate projection matrix
-  constexpr float fov = glm::radians(45.0f);
-  constexpr float aspectRatio = width / height;
-  const float near = 0.001f;
-  const float far = 1000.0f;
-  glm::mat4 projectionMatrix = glm::perspective(fov, aspectRatio, near, far);
-
-  // Generate model view projection matrix
-  glm::mat4 modelViewProjectionMatrix = projectionMatrix * viewMatrix * modelMatrix;
-
   // Generate quad vertex buffer
   GLuint vertexBuffer;
 
@@ -105,6 +114,9 @@ int main()
   {
     // Process the screen events
     glfwPollEvents();
+
+    glm::mat4 viewProjectionMatrix = camera.getViewProjection();
+    glm::mat4 modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
     // Clear the screen
     glClearColor(0.1f, 0.7f, 0.8f, 1.0f);
