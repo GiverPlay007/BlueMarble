@@ -21,6 +21,7 @@ struct vertex_t
 {
   glm::vec3 position;
   glm::vec3 color;
+  glm::vec2 UV;
 };
 
 int main()
@@ -41,9 +42,9 @@ int main()
 
   // Define triangle
   std::array<vertex_t, 3> triangle = {
-    vertex_t { glm::vec3 { -0.5f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 0.0f, 0.0f } },
-    vertex_t { glm::vec3 {  0.5f, -0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f } },
-    vertex_t { glm::vec3 {  0.0f,  0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f } },
+    vertex_t { glm::vec3 { -0.5f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 0.0f, 0.0f }, glm::vec2 { 0.0f, 0.0f }, },
+    vertex_t { glm::vec3 {  0.5f, -0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f }, glm::vec2 { 1.0f, 0.0f }, },
+    vertex_t { glm::vec3 {  0.0f,  0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f }, glm::vec2 { 0.5f, 1.0f }, },
   };
 
   // Generate model matrix
@@ -91,6 +92,7 @@ int main()
     // Enable vertex attributes
     glEnableVertexAttribArray(0); // Position
     glEnableVertexAttribArray(1); // Color
+    glEnableVertexAttribArray(2); // Texture UV
 
     // Bind the triangle vertices
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -98,6 +100,7 @@ int main()
     // Send triangle vertices attributes to the shader program
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
 
     // Draw the triangle
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -108,6 +111,7 @@ int main()
     // Disable shader attributes
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 
     // Disable shader program
     glUseProgram(0);
