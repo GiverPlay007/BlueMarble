@@ -48,8 +48,8 @@ int main()
   // Load Earth texture (NASA/public domain)
   GLuint textureId = loadTexture("textures/earth.jpg");
 
-  // Define triangle
-  std::array<vertex_t, 6> triangle = {
+  // Define quad
+  std::array<vertex_t, 6> quad = {
     vertex_t { glm::vec3 { -1.0f, -1.0f,  0.0f },
                glm::vec3 {  1.0f,  0.0f,  0.0f },
                glm::vec2 {  0.0f,  0.0f }, },
@@ -94,12 +94,12 @@ int main()
   // Generate model view projection matrix
   glm::mat4 modelViewProjectionMatrix = projectionMatrix * viewMatrix * modelMatrix;
 
-  // Generate triangle vertex buffer
+  // Generate quad vertex buffer
   GLuint vertexBuffer;
 
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad.data(), GL_STATIC_DRAW);
 
   while(!glfwWindowShouldClose(window))
   {
@@ -129,18 +129,18 @@ int main()
     glEnableVertexAttribArray(1); // Color
     glEnableVertexAttribArray(2); // Texture UV
 
-    // Bind the triangle vertices
+    // Bind the quad vertices
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     
-    // Send triangle vertices attributes to the shader program
+    // Send quad vertices attributes to the shader program
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
 
-    // Draw the triangle
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) triangle.size());
+    // Draw the quad
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) quad.size());
 
-    // Unbind triangle vertices
+    // Unbind quad vertices
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Disable shader attributes
