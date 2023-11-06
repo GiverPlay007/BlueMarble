@@ -8,14 +8,19 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-const int width = 1280;
-const int height = 720;
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+const int width = 800;
+const int height = 600;
 
 void printGlVersion();
 
 void checkShaderErrors(GLuint shaderId);
 
 GLuint compileShaderProgram(const char* shadersPath);
+
+GLuint loadTexture(const char* texturePath);
 
 struct vertex_t
 {
@@ -40,18 +45,41 @@ int main()
   // Compile the shader program
   GLuint shaderProgramId =  compileShaderProgram("shaders/triangle");
 
+  // Load Earth texture (NASA/public domain)
+  GLuint textureId = loadTexture("textures/earth.jpg");
+
   // Define triangle
-  std::array<vertex_t, 3> triangle = {
-    vertex_t { glm::vec3 { -0.5f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 0.0f, 0.0f }, glm::vec2 { 0.0f, 0.0f }, },
-    vertex_t { glm::vec3 {  0.5f, -0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f }, glm::vec2 { 1.0f, 0.0f }, },
-    vertex_t { glm::vec3 {  0.0f,  0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f }, glm::vec2 { 0.5f, 1.0f }, },
+  std::array<vertex_t, 6> triangle = {
+    vertex_t { glm::vec3 { -1.0f, -1.0f,  0.0f },
+               glm::vec3 {  1.0f,  0.0f,  0.0f },
+               glm::vec2 {  0.0f,  0.0f }, },
+
+    vertex_t { glm::vec3 {  1.0f, -1.0f,  0.0f },
+               glm::vec3 {  0.0f,  1.0f,  0.0f },
+               glm::vec2 {  1.0f,  0.0f }, },
+
+    vertex_t { glm::vec3 { -1.0f,  1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
+               glm::vec2 {  0.0f,  1.0f }, },
+    
+    vertex_t { glm::vec3 { -1.0f,  1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
+               glm::vec2 {  0.0f,  1.0f }, },
+
+    vertex_t { glm::vec3 {  1.0f, -1.0f,  0.0f },
+               glm::vec3 {  0.0f,  1.0f,  0.0f },
+               glm::vec2 {  1.0f,  0.0f }, },
+
+    vertex_t { glm::vec3 {  1.0f,  1.0f,  0.0f },
+               glm::vec3 {  1.0f,  0.0f,  0.0f },
+               glm::vec2 {  1.0f,  1.0f }, },
   };
 
   // Generate model matrix
   glm::mat4 modelMatrix = glm::identity<glm::mat4>();
 
   // Generate view matrix
-  glm::vec3 eye { 0.0f, 0.0f, 3.0f };
+  glm::vec3 eye { 0.0f, 0.0f, 5.0f };
   glm::vec3 center { 0.0f, 0.0f, 0.0f };
   glm::vec3 up { 0.0f, 1.0f, 0.0f };
   glm::mat4 viewMatrix = glm::lookAt(eye, center, up);
@@ -89,6 +117,13 @@ int main()
     GLint modelViewProjectionLocation = glGetUniformLocation(shaderProgramId, "modelViewProjection");
     glUniformMatrix4fv(modelViewProjectionLocation, 1, GL_FALSE, glm::value_ptr(modelViewProjectionMatrix));
 
+    // Use the earth texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    GLint textureSamplerLocation = glGetUniformLocation(shaderProgramId, "textureSampler");
+    glUniform1i(textureSamplerLocation, 0);
+
     // Enable vertex attributes
     glEnableVertexAttribArray(0); // Position
     glEnableVertexAttribArray(1); // Color
@@ -103,7 +138,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
 
     // Draw the triangle
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) triangle.size());
 
     // Unbind triangle vertices
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -124,6 +159,47 @@ int main()
   glfwTerminate();
   
   return 0;
+}
+
+GLuint loadTexture(const char* texturePath)
+{
+  std::cout << "Loading texture " << texturePath << std::endl;
+
+  stbi_set_flip_vertically_on_load(true);
+  
+  int textureWidth = 0;
+  int textureHeight = 0;
+  int numberOfComponents = 0;
+
+  unsigned char* textureData = stbi_load(texturePath, &textureWidth, &textureHeight, &numberOfComponents, 3);
+  assert(textureData);
+
+  // Generate texture identifier
+  GLuint textureId;
+  glGenTextures(1, &textureId);
+
+  // Bind texture to modify
+  glBindTexture(GL_TEXTURE_2D, textureId);
+
+  // Copy texture to the GPU
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+
+  // Configure texture filters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+  // Configure texture wrapping
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  // Generate texture mipmap
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  // Unbind the texture and free memory
+  glBindTexture(GL_TEXTURE_2D, 0);
+  stbi_image_free(textureData);
+
+  return textureId;
 }
 
 std::string readFile(const char* filePath)

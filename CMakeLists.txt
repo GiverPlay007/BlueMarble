@@ -45,17 +45,15 @@ else()
   )
 endif()
 
-add_custom_command(TARGET BlueMarble POST_BUILD COMMAND
-  ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/shaders"
-    "${CMAKE_CURRENT_BINARY_DIR}/shaders"
+add_custom_command(TARGET BlueMarble POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/shaders" "${CMAKE_CURRENT_BINARY_DIR}/shaders"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/textures" "${CMAKE_CURRENT_BINARY_DIR}/textures"
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_custom_command(TARGET BlueMarble POST_BUILD COMMAND
-    ${CMAKE_COMMAND} -E copy_directory
-      "${CMAKE_SOURCE_DIR}/shaders"
-      "${CMAKE_CURRENT_BINARY_DIR}/Debug/shaders"
+  add_custom_command(TARGET BlueMarble POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/shaders" "${CMAKE_CURRENT_BINARY_DIR}/Debug/shaders"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/textures" "${CMAKE_CURRENT_BINARY_DIR}/Debug/textures"
     )
   
   if(WIN32)
