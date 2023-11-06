@@ -47,7 +47,9 @@ public:
   float near = 0.01f;
   float far = 1000.0f;
 
+  // Camera movement
   float speed = 2.0f;
+  float sensitivity = 0.1;
 
   glm::mat4 getViewProjection() const
   {
@@ -55,6 +57,21 @@ public:
     glm::mat4 projection = glm::perspective(fov, aspectRatio, near, far);
 
     return projection * view;
+  }
+
+  void look(float yaw, float pitch)
+  {
+    yaw *= sensitivity;
+    pitch *= sensitivity;
+
+    const glm::vec3 right = glm::normalize(glm::cross(direction, up));
+    const glm::mat4 identity = glm::identity<glm::mat4>();
+
+    glm::mat4 pitchRotation = glm::rotate(identity, glm::radians(pitch), right);
+    glm::mat4 yawRotation = glm::rotate(identity, glm::radians(yaw), up);
+
+    up = pitchRotation * glm::vec4 { up, 0.0f };
+    direction = yawRotation * pitchRotation * glm::vec4 { direction, 0.0f };
   }
 
   void moveForward(float amount)
@@ -412,6 +429,8 @@ void mouseMotionCallback(GLFWwindow* window, double x, double y)
   {
     glm::vec2 cursorPosition = glm::vec2 { x, y };
     glm::vec2 deltaCursor = previousCursor - cursorPosition;
+
+    camera.look(deltaCursor.x, deltaCursor.y);
     previousCursor = cursorPosition;
   }
 }
