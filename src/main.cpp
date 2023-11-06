@@ -14,6 +14,10 @@
 const int width = 800;
 const int height = 600;
 
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int modifiers);
+
+void mouseMotionCallback(GLFWwindow* window, double x, double y);
+
 void printGlVersion();
 
 void checkShaderErrors(GLuint shaderId);
@@ -66,6 +70,9 @@ public:
 };
 
 FlyCamera camera;
+bool enableMouseMovement;
+
+glm::vec2 previousCursor { 0.0f, 0.0f };
 
 int main()
 {
@@ -75,6 +82,10 @@ int main()
   // Create GLFW window
   GLFWwindow* window = glfwCreateWindow(width, height, "Blue Marble", nullptr, nullptr);
   assert(window);
+
+  // Register window callbacks
+  glfwSetMouseButtonCallback(window, mouseButtonCallback);
+  glfwSetCursorPosCallback(window, mouseMotionCallback);
 
   // Configure window
   glfwMakeContextCurrent(window);
@@ -369,4 +380,38 @@ void printGlVersion()
   std::cout << "OpenGl Renderer: " << glGetString(GL_RENDERER) << std::endl;
   std::cout << "OpenGl Version (renderer): " << glGetString(GL_VERSION) << std::endl;
   std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int modifiers)
+{
+  if(button == GLFW_MOUSE_BUTTON_LEFT)
+  {
+    if(action == GLFW_PRESS)
+    {
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      double x;
+      double y;
+
+      glfwGetCursorPos(window, &x, &y);
+      
+      previousCursor = { x, y };
+      enableMouseMovement = true;
+    }
+
+    if(action == GLFW_RELEASE)
+    {
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+      enableMouseMovement = false;
+    }
+  }
+}
+
+void mouseMotionCallback(GLFWwindow* window, double x, double y)
+{
+  if(enableMouseMovement)
+  {
+    glm::vec2 cursorPosition = glm::vec2 { x, y };
+    glm::vec2 deltaCursor = previousCursor - cursorPosition;
+    previousCursor = cursorPosition;
+  }
 }
