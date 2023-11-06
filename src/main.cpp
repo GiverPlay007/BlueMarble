@@ -65,14 +65,6 @@ int main()
   // Generate model view projection matrix
   glm::mat4 modelViewProjectionMatrix = projectionMatrix * viewMatrix * modelMatrix;
 
-  // Apply model view projection to the triangle vertices
-  for(vertex_t& vertex : triangle)
-  {
-    glm::vec4 projectedVertex = modelViewProjectionMatrix * glm::vec4 { vertex.position, 1.0f };
-    projectedVertex /= projectedVertex.w;
-    vertex.position = projectedVertex;
-  }
-
   // Generate triangle vertex buffer
   GLuint vertexBuffer;
 
@@ -91,6 +83,10 @@ int main()
     
     // Activate shader program
     glUseProgram(shaderProgramId);
+
+    // Send the model view projection matrix to the shader program
+    GLint modelViewProjectionLocation = glGetUniformLocation(shaderProgramId, "modelViewProjection");
+    glUniformMatrix4fv(modelViewProjectionLocation, 1, GL_FALSE, glm::value_ptr(modelViewProjectionMatrix));
 
     // Enable vertex attributes
     glEnableVertexAttribArray(0); // Position
