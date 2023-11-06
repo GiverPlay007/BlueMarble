@@ -43,12 +43,25 @@ public:
   float near = 0.01f;
   float far = 1000.0f;
 
+  float speed = 2.0f;
+
   glm::mat4 getViewProjection() const
   {
     glm::mat4 view = glm::lookAt(location, location + direction, up);
     glm::mat4 projection = glm::perspective(fov, aspectRatio, near, far);
 
     return projection * view;
+  }
+
+  void moveForward(float amount)
+  {
+    location += glm::normalize(direction) * amount * speed;
+  }
+
+  void moveRight(float amount)
+  {
+    glm::vec3 right = glm::normalize(glm::cross(direction, up));
+    location += right * amount * speed;
   }
 };
 
@@ -59,10 +72,15 @@ int main()
   // Create window and OpenGL context
   assert(glfwInit() == GLFW_TRUE);
 
+  // Create GLFW window
   GLFWwindow* window = glfwCreateWindow(width, height, "Blue Marble", nullptr, nullptr);
   assert(window);
 
+  // Configure window
   glfwMakeContextCurrent(window);
+  glfwSwapInterval(1); // V-Sync
+
+  // Check if glew has been initialized
   assert(glewInit() == GLEW_OK);
 
   printGlVersion();
@@ -110,11 +128,32 @@ int main()
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad.data(), GL_STATIC_DRAW);
 
+  // Last frame time
+  double previousTime = glfwGetTime();
+
   while(!glfwWindowShouldClose(window))
   {
-    // Process the screen events
+    // Calculate delta time
+    double currentTime = glfwGetTime();
+    float deltaTime = (float) (currentTime - previousTime);
+    previousTime = currentTime;
+
+    // Process the window events
     glfwPollEvents();
 
+    // Process keyboard input
+    char moveForward = 0;
+    char moveRight = 0;
+
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) moveForward++;
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) moveForward--;
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) moveRight--;
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) moveRight++;
+
+    if(moveForward) camera.moveForward(moveForward * deltaTime);
+    if(moveRight) camera.moveRight(moveRight * deltaTime);
+
+    // Generate the model view projection matrix
     glm::mat4 viewProjectionMatrix = camera.getViewProjection();
     glm::mat4 modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
