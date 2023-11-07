@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <array>
+#include <vector>
 #include <fstream>
 
 #include <GL/glew.h>
@@ -27,6 +28,8 @@ GLuint compileShaderProgram(const char* shadersPath);
 GLuint loadTexture(const char* texturePath);
 
 GLuint generateVao();
+
+void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices);
 
 struct vertex_t
 {
@@ -198,6 +201,42 @@ int main()
   glfwTerminate();
   
   return 0;
+}
+
+void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices)
+{
+  vertices.clear();
+
+  constexpr float pi = glm::pi<float>();
+  constexpr float twoPi = glm::two_pi<float>();
+
+  const float inverseResolution = 1.0f / static_cast<float>(resolution - 1);
+
+  for(GLuint uIndex = 0; uIndex < resolution; ++uIndex)
+  {
+    const float u = uIndex * inverseResolution;
+    const float theta = glm::mix(0.0f, pi, u);
+
+    for(GLuint vIndex = 0; vIndex < resolution; ++vIndex)
+    {
+      const float v = vIndex * inverseResolution;
+      const float phi = glm::mix(0.0f, twoPi, v);
+
+      glm::vec3 vertexPosition = {
+        glm::sin(theta) * glm::cos(phi),
+        glm::sin(theta) * glm::sin(phi),
+        glm::cos(theta)
+      };
+
+      vertex_t vertex {
+        vertexPosition,
+        glm::vec3{ 1.0f, 1.0f, 1.0f },
+        glm::vec2 { u, v }
+      };
+
+      vertices.push_back(vertex);
+    }
+  }
 }
 
 GLuint generateVao()
