@@ -139,7 +139,7 @@ int main()
   GLuint sphereVaoId = generateSphereVao(sphereNumVertices, sphereNumIndexes);
 
   // Generate model matrix
-  glm::mat4 modelMatrix = glm::identity<glm::mat4>();
+  glm::mat4 modelMatrix = glm::rotate(glm::identity<glm::mat4>(), glm::radians(90.0f), glm::vec3{ 1.0f, 0.0f, 0.0f });
 
   // Enable back face culling
   glEnable(GL_CULL_FACE);
@@ -244,7 +244,7 @@ void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices, std:
       vertex_t vertex {
         vertexPosition,
         glm::vec3{ 1.0f, 1.0f, 1.0f },
-        glm::vec2 { u, v }
+        glm::vec2 { 1.0f - u, v }
       };
 
       vertices.push_back(vertex);
