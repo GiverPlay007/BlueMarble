@@ -38,9 +38,9 @@ GLuint loadTexture(const char* texturePath);
 
 GLuint generateVao();
 
-GLuint generateSphereVao(GLuint& numVertices);
+GLuint generateSphereVao(GLuint& numVertices, GLuint& numIndexes);
 
-void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices);
+void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices, std::vector<glm::ivec3>& indexes);
 
 class FlyCamera
 {
@@ -135,7 +135,8 @@ int main()
   GLuint vaoId = generateVao();
 
   GLuint sphereNumVertices = 0;
-  GLuint sphereVaoId = generateSphereVao(sphereNumVertices);
+  GLuint sphereNumIndexes = 0;
+  GLuint sphereVaoId = generateSphereVao(sphereNumVertices, sphereNumIndexes);
 
   // Generate model matrix
   glm::mat4 modelMatrix = glm::identity<glm::mat4>();
@@ -195,13 +196,8 @@ int main()
     // glBindVertexArray(vaoId);
     glBindVertexArray(sphereVaoId);
 
-    glPointSize(6.0f);
-    glLineWidth(5.0f);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    // Draw the quad
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    glDrawArrays(GL_POINTS, 0, sphereNumVertices);
+    // Draw the sphere
+    glDrawElements(GL_TRIANGLES, sphereNumIndexes, GL_UNSIGNED_INT, nullptr);
 
     // Unbind VAO
     glBindVertexArray(0);
@@ -219,9 +215,10 @@ int main()
   return 0;
 }
 
-void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices)
+void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices, std::vector<glm::ivec3>& indexes)
 {
   vertices.clear();
+  indexes.clear();
 
   constexpr float pi = glm::pi<float>();
   constexpr float twoPi = glm::two_pi<float>();
@@ -231,12 +228,12 @@ void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices)
   for(GLuint uIndex = 0; uIndex < resolution; ++uIndex)
   {
     const float u = uIndex * inverseResolution;
-    const float theta = glm::mix(0.0f, pi, u);
+    const float phi = glm::mix(0.0f, twoPi, u);
 
     for(GLuint vIndex = 0; vIndex < resolution; ++vIndex)
     {
       const float v = vIndex * inverseResolution;
-      const float phi = glm::mix(0.0f, twoPi, v);
+      const float theta = glm::mix(0.0f, pi, v);
 
       glm::vec3 vertexPosition = {
         glm::sin(theta) * glm::cos(phi),
@@ -253,20 +250,42 @@ void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices)
       vertices.push_back(vertex);
     }
   }
+
+  for(GLuint u = 0; u < resolution -1; ++u)
+  {
+    for(GLuint v = 0; v < resolution -1; ++v)
+    {
+      GLuint p0 = u + v * resolution;
+      GLuint p1 = (u + 1) + v * resolution;
+      GLuint p2 = (u + 1) + (v + 1) * resolution;
+      GLuint p3 = u + (v + 1) * resolution;
+
+      indexes.push_back(glm::ivec3{ p0, p1, p3 });
+      indexes.push_back(glm::ivec3{ p3, p1, p2 });
+    }
+  }
 }
 
-GLuint generateSphereVao(GLuint& numVertices)
+GLuint generateSphereVao(GLuint& numVertices, GLuint& numIndexes)
 {
   std::vector<vertex_t> vertices;
-  generateSphereMesh(100, vertices);
+  std::vector<glm::ivec3> triangles;
+
+  generateSphereMesh(50, vertices, triangles);
 
   numVertices = static_cast<GLsizei>(vertices.size());
+  numIndexes = static_cast<GLsizei>(triangles.size()) * 3;
 
   // Generate sphere VBO and send data to the GPU
   GLuint vertexBuffer;
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex_t), vertices.data(), GL_STATIC_DRAW);
+
+  GLuint elementBuffer;
+  glGenBuffers(1, &elementBuffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndexes * sizeof(GLuint), triangles.data(), GL_STATIC_DRAW);
 
   GLuint vaoId;
   glGenVertexArrays(1, &vaoId);
@@ -277,6 +296,7 @@ GLuint generateSphereVao(GLuint& numVertices)
   glEnableVertexAttribArray(2);
 
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
