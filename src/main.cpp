@@ -12,8 +12,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-const int width = 800;
-const int height = 600;
+int width = 800;
+int height = 600;
 
 struct vertex_t
 {
@@ -25,6 +25,8 @@ struct vertex_t
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int modifiers);
 
 void mouseMotionCallback(GLFWwindow* window, double x, double y);
+
+void resize(GLFWwindow* window, int newWidth, int newHeight);
 
 void printGlVersion();
 
@@ -49,7 +51,7 @@ public:
   glm::vec3 up        { 0.0f, 1.0f,  0.0f };
 
   // Projection matrix
-  float aspectRatio = width / height;
+  float aspectRatio = static_cast<float> (width) / height;
   float fov = glm::radians(45.0f);
   float near = 0.01f;
   float far = 1000.0f;
@@ -110,6 +112,7 @@ int main()
   // Register window callbacks
   glfwSetMouseButtonCallback(window, mouseButtonCallback);
   glfwSetCursorPosCallback(window, mouseMotionCallback);
+  glfwSetFramebufferSizeCallback(window, resize);
 
   // Configure window
   glfwMakeContextCurrent(window);
@@ -119,6 +122,8 @@ int main()
   assert(glewInit() == GLEW_OK);
 
   printGlVersion();
+
+  resize(window, width, height);
 
   // Compile the shader program
   GLuint shaderProgramId =  compileShaderProgram("shaders/triangle");
@@ -541,4 +546,13 @@ void mouseMotionCallback(GLFWwindow* window, double x, double y)
     camera.look(deltaCursor.x, deltaCursor.y);
     previousCursor = cursorPosition;
   }
+}
+
+void resize(GLFWwindow* window, int newWidth, int newHeight)
+{
+  width = newWidth;
+  height = newHeight;
+
+  camera.aspectRatio = static_cast<float> (width) / height;
+  glViewport(0, 0, width, height);
 }
