@@ -145,6 +145,10 @@ int main()
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 
+  // Enable depth test
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+
   // Last frame time
   double previousTime = glfwGetTime();
 
@@ -176,8 +180,8 @@ int main()
 
     // Clear the screen
     glClearColor(0.1f, 0.7f, 0.8f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     // Activate shader program
     glUseProgram(shaderProgramId);
 
