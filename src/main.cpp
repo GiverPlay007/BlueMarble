@@ -120,7 +120,7 @@ int main()
   GLuint textureId = loadTexture("textures/earth.jpg");
 
   // Define quad
-  std::array<vertex_t, 6> quad = {
+  std::array<vertex_t, 4> quad = {
     vertex_t { glm::vec3 { -1.0f, -1.0f,  0.0f },
                glm::vec3 {  1.0f,  0.0f,  0.0f },
                glm::vec2 {  0.0f,  0.0f }, },
@@ -129,32 +129,36 @@ int main()
                glm::vec3 {  0.0f,  1.0f,  0.0f },
                glm::vec2 {  1.0f,  0.0f }, },
 
-    vertex_t { glm::vec3 { -1.0f,  1.0f,  0.0f },
-               glm::vec3 {  0.0f,  0.0f,  1.0f },
-               glm::vec2 {  0.0f,  1.0f }, },
-    
-    vertex_t { glm::vec3 { -1.0f,  1.0f,  0.0f },
-               glm::vec3 {  0.0f,  0.0f,  1.0f },
-               glm::vec2 {  0.0f,  1.0f }, },
-
-    vertex_t { glm::vec3 {  1.0f, -1.0f,  0.0f },
-               glm::vec3 {  0.0f,  1.0f,  0.0f },
-               glm::vec2 {  1.0f,  0.0f }, },
-
     vertex_t { glm::vec3 {  1.0f,  1.0f,  0.0f },
                glm::vec3 {  1.0f,  0.0f,  0.0f },
                glm::vec2 {  1.0f,  1.0f }, },
+
+    vertex_t { glm::vec3 { -1.0f,  1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
+               glm::vec2 {  0.0f,  1.0f }, }
+  };
+
+  // Define EBO indexes
+  std::array<glm::ivec3, 2> indexes = {
+    glm::ivec3 { 0, 1, 3 },
+    glm::ivec3 { 3, 1, 2 }
   };
 
   // Generate model matrix
   glm::mat4 modelMatrix = glm::identity<glm::mat4>();
 
-  // Generate quad vertex buffer
+  // Generate VBO identifier and send data to GPU
   GLuint vertexBuffer;
-
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad.data(), GL_STATIC_DRAW);
+
+  // Generate EBO identifier and send data to GPU
+  GLuint elementBuffer;
+  glGenBuffers(1, &elementBuffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), indexes.data(), GL_STATIC_DRAW);
+  
 
   // Enable back face culling
   glEnable(GL_CULL_FACE);
@@ -212,8 +216,9 @@ int main()
     glEnableVertexAttribArray(1); // Color
     glEnableVertexAttribArray(2); // Texture UV
 
-    // Bind the quad vertices
+    // Bind the quad buffers
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     
     // Send quad vertices attributes to the shader program
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
@@ -221,10 +226,11 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
 
     // Draw the quad
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei) quad.size());
+    glDrawElements(GL_TRIANGLES, (GLsizei) (indexes.size() * 3), GL_UNSIGNED_INT, nullptr);
 
-    // Unbind quad vertices
+    // Unbind quad buffers
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Disable shader attributes
     glDisableVertexAttribArray(0);
