@@ -15,6 +15,13 @@
 const int width = 800;
 const int height = 600;
 
+struct vertex_t
+{
+  glm::vec3 position;
+  glm::vec3 color;
+  glm::vec2 UV;
+};
+
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int modifiers);
 
 void mouseMotionCallback(GLFWwindow* window, double x, double y);
@@ -29,14 +36,9 @@ GLuint loadTexture(const char* texturePath);
 
 GLuint generateVao();
 
-void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices);
+GLuint generateSphereVao(GLuint& numVertices);
 
-struct vertex_t
-{
-  glm::vec3 position;
-  glm::vec3 color;
-  glm::vec2 UV;
-};
+void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices);
 
 class FlyCamera
 {
@@ -127,6 +129,9 @@ int main()
   // Generate quad VAO
   GLuint vaoId = generateVao();
 
+  GLuint sphereNumVertices = 0;
+  GLuint sphereVaoId = generateSphereVao(sphereNumVertices);
+
   // Generate model matrix
   glm::mat4 modelMatrix = glm::identity<glm::mat4>();
 
@@ -182,10 +187,16 @@ int main()
     glUniform1i(textureSamplerLocation, 0);
 
     // Bind VAO
-    glBindVertexArray(vaoId);
+    // glBindVertexArray(vaoId);
+    glBindVertexArray(sphereVaoId);
+
+    glPointSize(6.0f);
+    glLineWidth(5.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Draw the quad
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    glDrawArrays(GL_POINTS, 0, sphereNumVertices);
 
     // Unbind VAO
     glBindVertexArray(0);
@@ -237,6 +248,38 @@ void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices)
       vertices.push_back(vertex);
     }
   }
+}
+
+GLuint generateSphereVao(GLuint& numVertices)
+{
+  std::vector<vertex_t> vertices;
+  generateSphereMesh(100, vertices);
+
+  numVertices = static_cast<GLsizei>(vertices.size());
+
+  // Generate sphere VBO and send data to the GPU
+  GLuint vertexBuffer;
+  glGenBuffers(1, &vertexBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex_t), vertices.data(), GL_STATIC_DRAW);
+
+  GLuint vaoId;
+  glGenVertexArrays(1, &vaoId);
+  glBindVertexArray(vaoId);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(2);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
+
+  glBindVertexArray(0);
+
+  return vaoId;
 }
 
 GLuint generateVao()
