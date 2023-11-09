@@ -18,6 +18,7 @@ int height = 600;
 struct vertex_t
 {
   glm::vec3 position;
+  glm::vec3 normal;
   glm::vec3 color;
   glm::vec2 UV;
 };
@@ -60,12 +61,15 @@ public:
   float speed = 2.0f;
   float sensitivity = 0.1f;
 
+  glm::mat4 getViewMatrix() const
+  {
+    return glm::lookAt(location, location + direction, up);
+  }
+
   glm::mat4 getViewProjection() const
   {
-    glm::mat4 view = glm::lookAt(location, location + direction, up);
     glm::mat4 projection = glm::perspective(fov, aspectRatio, near, far);
-
-    return projection * view;
+    return projection * getViewMatrix();
   }
 
   void look(float yaw, float pitch)
@@ -175,6 +179,7 @@ int main()
     if(moveRight) camera.moveRight(moveRight * deltaTime);
 
     // Generate the model view projection matrix
+    glm::mat4 normalMatrix = glm::inverse(glm::transpose(camera.getViewMatrix() * modelMatrix));
     glm::mat4 viewProjectionMatrix = camera.getViewProjection();
     glm::mat4 modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
@@ -184,6 +189,10 @@ int main()
 
     // Activate shader program
     glUseProgram(shaderProgramId);
+
+    // Send the normal matrix to the shader program
+    GLuint normalMatrixLoc = glGetUniformLocation(shaderProgramId, "normalMatrix");
+    glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
     // Send the model view projection matrix to the shader program
     GLint modelViewProjectionLocation = glGetUniformLocation(shaderProgramId, "modelViewProjection");
@@ -247,6 +256,7 @@ void generateSphereMesh(GLuint resolution, std::vector<vertex_t>& vertices, std:
 
       vertex_t vertex {
         vertexPosition,
+        glm::normalize(vertexPosition),
         glm::vec3{ 1.0f, 1.0f, 1.0f },
         glm::vec2 { 1.0f - u, v }
       };
@@ -298,13 +308,15 @@ GLuint generateSphereVao(GLuint& numVertices, GLuint& numIndexes)
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glEnableVertexAttribArray(2);
+  glEnableVertexAttribArray(3);
 
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, normal))); // Normal
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
+  glVertexAttribPointer(3, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
 
   glBindVertexArray(0);
 
@@ -316,18 +328,22 @@ GLuint generateVao()
   // Define quad
   std::array<vertex_t, 4> quad = {
     vertex_t { glm::vec3 { -1.0f, -1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
                glm::vec3 {  1.0f,  0.0f,  0.0f },
                glm::vec2 {  0.0f,  0.0f }, },
 
     vertex_t { glm::vec3 {  1.0f, -1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
                glm::vec3 {  0.0f,  1.0f,  0.0f },
                glm::vec2 {  1.0f,  0.0f }, },
 
     vertex_t { glm::vec3 {  1.0f,  1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
                glm::vec3 {  1.0f,  0.0f,  0.0f },
                glm::vec2 {  1.0f,  1.0f }, },
 
     vertex_t { glm::vec3 { -1.0f,  1.0f,  0.0f },
+               glm::vec3 {  0.0f,  0.0f,  1.0f },
                glm::vec3 {  0.0f,  0.0f,  1.0f },
                glm::vec2 {  0.0f,  1.0f }, }
   };
@@ -359,8 +375,9 @@ GLuint generateVao()
 
   // Enable vertex attributes
   glEnableVertexAttribArray(0); // Position
-  glEnableVertexAttribArray(1); // Color
-  glEnableVertexAttribArray(2); // Texture UV
+  glEnableVertexAttribArray(1); // Normal
+  glEnableVertexAttribArray(2); // Color
+  glEnableVertexAttribArray(3); // Texture UV
 
   // Bind the quad buffers
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -368,8 +385,9 @@ GLuint generateVao()
 
   // Send quad vertices attributes to the shader program
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), nullptr); // Position
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, normal))); // Normal
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, color))); // Color
+  glVertexAttribPointer(3, 2, GL_FLOAT, GL_TRUE, sizeof(vertex_t), reinterpret_cast<void*>(offsetof(vertex_t, UV))); // Texture UV
 
   // Unbind VAO
   glBindVertexArray(0);

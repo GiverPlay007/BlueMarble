@@ -2,6 +2,7 @@
 
 uniform sampler2D textureSampler;
 
+in vec3 normal;
 in vec3 fColor;
 in vec2 UV;
 
