@@ -23,6 +23,12 @@ struct vertex_t
   glm::vec2 UV;
 };
 
+struct DirectionalLight
+{
+  glm::vec3 direction;
+  GLfloat intensity;
+};
+
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int modifiers);
 
 void mouseMotionCallback(GLFWwindow* window, double x, double y);
@@ -153,6 +159,9 @@ int main()
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
 
+  // Create directional light source
+  DirectionalLight light { glm::vec3 { 0.0f, 0.0f, -1.0f }, 1.0f };
+
   // Last frame time
   double previousTime = glfwGetTime();
 
@@ -179,12 +188,13 @@ int main()
     if(moveRight) camera.moveRight(moveRight * deltaTime);
 
     // Generate the model view projection matrix
-    glm::mat4 normalMatrix = glm::inverse(glm::transpose(camera.getViewMatrix() * modelMatrix));
+    glm::mat4 viewMatrix = camera.getViewMatrix();
+    glm::mat4 normalMatrix = glm::inverse(glm::transpose(viewMatrix * modelMatrix));
     glm::mat4 viewProjectionMatrix = camera.getViewProjection();
     glm::mat4 modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
     // Clear the screen
-    glClearColor(0.1f, 0.7f, 0.8f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Activate shader program
@@ -204,6 +214,14 @@ int main()
 
     GLint textureSamplerLocation = glGetUniformLocation(shaderProgramId, "textureSampler");
     glUniform1i(textureSamplerLocation, 0);
+
+    // Directional light direction
+    GLint lightDirectionLocation = glGetUniformLocation(shaderProgramId, "lightDirection");
+    glUniform3fv(lightDirectionLocation, 1, glm::value_ptr(viewMatrix * glm::vec4{ light.direction, 0.0f }));
+
+    // Directional light intensity
+    GLint lightIntensityLocation = glGetUniformLocation(shaderProgramId, "lightIntensity");
+    glUniform1f(lightIntensityLocation, light.intensity);
 
     // Bind VAO
     // glBindVertexArray(vaoId);
