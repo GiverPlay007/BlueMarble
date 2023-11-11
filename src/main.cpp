@@ -140,6 +140,7 @@ int main()
 
   // Load Earth texture (NASA/public domain)
   GLuint textureId = loadTexture("textures/earth.jpg");
+  GLuint cloudTextureId = loadTexture("textures/clouds.jpg");
 
   // Generate quad VAO
   GLuint vaoId = generateVao();
@@ -200,6 +201,9 @@ int main()
     // Activate shader program
     glUseProgram(shaderProgramId);
 
+    GLint timeLocation = glGetUniformLocation(shaderProgramId, "time");
+    glUniform1f(timeLocation, (float) currentTime);
+
     // Send the normal matrix to the shader program
     GLuint normalMatrixLoc = glGetUniformLocation(shaderProgramId, "normalMatrix");
     glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
@@ -212,8 +216,17 @@ int main()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
 
+    // Use the cloud texture
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, cloudTextureId);
+
+    // Set texture sampler index
     GLint textureSamplerLocation = glGetUniformLocation(shaderProgramId, "textureSampler");
     glUniform1i(textureSamplerLocation, 0);
+
+    // Set cloud texture sampler index
+    GLint cloudTextureSamplerLocation = glGetUniformLocation(shaderProgramId, "cloudTextureSampler");
+    glUniform1i(cloudTextureSamplerLocation, 1);
 
     // Directional light direction
     GLint lightDirectionLocation = glGetUniformLocation(shaderProgramId, "lightDirection");

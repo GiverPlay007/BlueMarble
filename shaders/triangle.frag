@@ -1,8 +1,13 @@
 #version 330 core
 
 uniform sampler2D textureSampler;
+uniform sampler2D cloudTextureSampler;
+
 uniform vec3 lightDirection;
 uniform float lightIntensity;
+
+uniform float time;
+uniform vec2 cloudsRotationSpeed = vec2(0.002, 0.0);
 
 in vec3 normal;
 in vec3 fColor;
@@ -30,6 +35,10 @@ void main()
   float specular = pow(max(dot(R, V), 0.0), alpha);
 
   vec3 textureColor = texture(textureSampler, UV).rgb;
-  vec3 finalColor = textureColor * lightIntensity * lambertian + specular;
+  vec3 cloudsColor = texture(cloudTextureSampler, UV + time * cloudsRotationSpeed).rgb;
+
+  vec3 surfaceColor = textureColor + cloudsColor;
+
+  vec3 finalColor = lightIntensity * lambertian * surfaceColor + specular;
   color = vec4(finalColor, 1.0);
 }
